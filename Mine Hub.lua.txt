@@ -380,11 +380,116 @@ local function stealLoop()
 end
 
 local function createWindUI()
-    local existing = getgenv().WindUI
-    if existing and existing.Create then
-        return existing
+    local WindUI = nil
+    local success = false
+
+    local possibleUrls = {
+        "https://raw.githubusercontent.com/Footagesus/WindUI/main/Source.lua",
+        "https://raw.githubusercontent.com/Footagesus/WindUI/main/init.lua",
+        "https://raw.githubusercontent.com/Footagesus/WindUI/master/Source.lua",
+    }
+
+    for _, url in ipairs(possibleUrls) do
+        local ok, result = pcall(function()
+            return loadstring(game:HttpGet(url))()
+        end)
+        if ok and result then
+            WindUI = result
+            success = true
+            break
+        end
     end
 
+    if not success or not WindUI then
+        return createFallbackWindUI()
+    end
+
+    detectAllSpecies()
+    local speciesOptions = {"All"}
+    for _, species in ipairs(detectedSpecies) do
+        table.insert(speciesOptions, species)
+    end
+
+    local window = WindUI:CreateWindow({
+        Title = "Auto Steal Egg",
+        Subtitle = "Roblox Egg Stealer",
+        TabWidth = 160,
+        Size = UDim2.new(0, 460, 0, 400),
+    })
+
+    local MainTab = window:CreateTab({
+        Name = "Main",
+        Icon = "rbxassetid://4483345998",
+    })
+
+    MainTab:AddDropdown({
+        Name = "Species",
+        Default = config.TargetSpecies,
+        Options = speciesOptions,
+        Callback = function(value)
+            config.TargetSpecies = value
+        end,
+    })
+
+    MainTab:AddSlider({
+        Name = "Tween Speed",
+        Min = 1,
+        Max = 20,
+        Default = config.TweenSpeed,
+        Increment = 1,
+        Callback = function(value)
+            config.TweenSpeed = value
+        end,
+    })
+
+    MainTab:AddSlider({
+        Name = "Height Speed",
+        Min = 0.5,
+        Max = 10,
+        Default = config.HeightSpeed,
+        Increment = 0.5,
+        Callback = function(value)
+            config.HeightSpeed = value
+        end,
+    })
+
+    MainTab:AddSlider({
+        Name = "Search Range",
+        Min = 20,
+        Max = 500,
+        Default = config.SearchRange,
+        Increment = 10,
+        Callback = function(value)
+            config.SearchRange = value
+        end,
+    })
+
+    MainTab:AddSlider({
+        Name = "Steal Distance",
+        Min = 2,
+        Max = 20,
+        Default = config.StealDistance,
+        Increment = 1,
+        Callback = function(value)
+            config.StealDistance = value
+        end,
+    })
+
+    MainTab:AddToggle({
+        Name = "Enabled",
+        Default = config.Enabled,
+        Callback = function(value)
+            config.Enabled = value
+            if value then
+                task.spawn(stealLoop)
+            end
+        end,
+    })
+
+    return window
+end
+
+local function createFallbackWindUI()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "WindUI_Fallback"
     screenGui.ResetOnSpawn = false
@@ -434,85 +539,6 @@ local function createWindUI()
     tabList.FillDirection = Enum.FillDirection.Vertical
     tabList.Padding = UDim.new(0, 8)
     tabList.Parent = tabArea
-
-    local function makeLabel(text, yPos)
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, 0, 0, 18)
-        label.Position = UDim2.new(0, 0, 0, yPos)
-        label.BackgroundTransparency = 1
-        label.Text = text
-        label.Font = Enum.Font.GothamSemibold
-        label.TextSize = 12
-        label.TextColor3 = Color3.fromRGB(205, 213, 228)
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        return label
-    end
-
-    local function createButton(text, callback)
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(1, 0, 0, 34)
-        btn.BackgroundColor3 = Color3.fromRGB(90, 118, 246)
-        btn.BorderSizePixel = 0
-        btn.Text = text
-        btn.Font = Enum.Font.GothamBold
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.TextSize = 13
-        btn.Parent = tabArea
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 10)
-        corner.Parent = btn
-        btn.MouseButton1Click:Connect(function()
-            callback()
-        end)
-        return btn
-    end
-
-    local function createToggle(labelText, defaultValue, callback)
-        local holder = Instance.new("Frame")
-        holder.Size = UDim2.new(1, 0, 0, 38)
-        holder.BackgroundColor3 = Color3.fromRGB(27, 29, 36)
-        holder.BorderSizePixel = 0
-        holder.Parent = tabArea
-
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 10)
-        corner.Parent = holder
-
-        local text = Instance.new("TextLabel")
-        text.Size = UDim2.new(1, -70, 1, 0)
-        text.BackgroundTransparency = 1
-        text.Text = labelText
-        text.Font = Enum.Font.GothamSemibold
-        text.TextSize = 12
-        text.TextColor3 = Color3.fromRGB(240, 245, 255)
-        text.TextXAlignment = Enum.TextXAlignment.Left
-        text.Position = UDim2.new(0, 10, 0, 0)
-        text.Parent = holder
-
-        local toggle = Instance.new("TextButton")
-        toggle.Size = UDim2.new(0, 60, 0, 22)
-        toggle.Position = UDim2.new(1, -70, 0.5, -11)
-        toggle.BackgroundColor3 = defaultValue and Color3.fromRGB(56, 184, 102) or Color3.fromRGB(120, 120, 120)
-        toggle.BorderSizePixel = 0
-        toggle.Text = defaultValue and "ON" or "OFF"
-        toggle.Font = Enum.Font.GothamBold
-        toggle.TextSize = 10
-        toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-        toggle.Parent = holder
-
-        local toggleCorner = Instance.new("UICorner")
-        toggleCorner.CornerRadius = UDim.new(0, 10)
-        toggleCorner.Parent = toggle
-
-        toggle.MouseButton1Click:Connect(function()
-            defaultValue = not defaultValue
-            toggle.Text = defaultValue and "ON" or "OFF"
-            toggle.BackgroundColor3 = defaultValue and Color3.fromRGB(56, 184, 102) or Color3.fromRGB(120, 120, 120)
-            callback(defaultValue)
-        end)
-
-        return holder
-    end
 
     local function createSlider(labelText, minValue, maxValue, defaultValue, callback)
         local holder = Instance.new("Frame")
@@ -686,7 +712,52 @@ local function createWindUI()
         return holder
     end
 
-    local mainTab = {}
+    local function createToggle(labelText, defaultValue, callback)
+        local holder = Instance.new("Frame")
+        holder.Size = UDim2.new(1, 0, 0, 38)
+        holder.BackgroundColor3 = Color3.fromRGB(27, 29, 36)
+        holder.BorderSizePixel = 0
+        holder.Parent = tabArea
+
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 10)
+        corner.Parent = holder
+
+        local text = Instance.new("TextLabel")
+        text.Size = UDim2.new(1, -70, 1, 0)
+        text.BackgroundTransparency = 1
+        text.Text = labelText
+        text.Font = Enum.Font.GothamSemibold
+        text.TextSize = 12
+        text.TextColor3 = Color3.fromRGB(240, 245, 255)
+        text.TextXAlignment = Enum.TextXAlignment.Left
+        text.Position = UDim2.new(0, 10, 0, 0)
+        text.Parent = holder
+
+        local toggle = Instance.new("TextButton")
+        toggle.Size = UDim2.new(0, 60, 0, 22)
+        toggle.Position = UDim2.new(1, -70, 0.5, -11)
+        toggle.BackgroundColor3 = defaultValue and Color3.fromRGB(56, 184, 102) or Color3.fromRGB(120, 120, 120)
+        toggle.BorderSizePixel = 0
+        toggle.Text = defaultValue and "ON" or "OFF"
+        toggle.Font = Enum.Font.GothamBold
+        toggle.TextSize = 10
+        toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        toggle.Parent = holder
+
+        local toggleCorner = Instance.new("UICorner")
+        toggleCorner.CornerRadius = UDim.new(0, 10)
+        toggleCorner.Parent = toggle
+
+        toggle.MouseButton1Click:Connect(function()
+            defaultValue = not defaultValue
+            toggle.Text = defaultValue and "ON" or "OFF"
+            toggle.BackgroundColor3 = defaultValue and Color3.fromRGB(56, 184, 102) or Color3.fromRGB(120, 120, 120)
+            callback(defaultValue)
+        end)
+
+        return holder
+    end
 
     detectAllSpecies()
     local speciesOptions = {"All"}
@@ -694,40 +765,34 @@ local function createWindUI()
         table.insert(speciesOptions, species)
     end
 
-    table.insert(mainTab, createDropdown("Species", speciesOptions, config.TargetSpecies, function(value)
+    createDropdown("Species", speciesOptions, config.TargetSpecies, function(value)
         config.TargetSpecies = value
-    end))
+    end)
 
-    table.insert(mainTab, createSlider("Tween Speed", 1, 20, config.TweenSpeed, function(value)
+    createSlider("Tween Speed", 1, 20, config.TweenSpeed, function(value)
         config.TweenSpeed = value
-    end))
+    end)
 
-    table.insert(mainTab, createSlider("Height Speed", 0.5, 10, config.HeightSpeed, function(value)
+    createSlider("Height Speed", 0.5, 10, config.HeightSpeed, function(value)
         config.HeightSpeed = value
-    end))
+    end)
 
-    table.insert(mainTab, createSlider("Search Range", 20, 500, config.SearchRange, function(value)
+    createSlider("Search Range", 20, 500, config.SearchRange, function(value)
         config.SearchRange = value
-    end))
+    end)
 
-    table.insert(mainTab, createSlider("Steal Distance", 2, 20, config.StealDistance, function(value)
+    createSlider("Steal Distance", 2, 20, config.StealDistance, function(value)
         config.StealDistance = value
-    end))
+    end)
 
-    table.insert(mainTab, createToggle("Enabled", config.Enabled, function(value)
+    createToggle("Enabled", config.Enabled, function(value)
         config.Enabled = value
         if value then
             task.spawn(stealLoop)
         end
-    end))
+    end)
 
-    local api = {
-        Window = window,
-        ScreenGui = screenGui,
-    }
-
-    getgenv().WindUI = api
-    return api
+    return window
 end
 
 local WindUI = createWindUI()
