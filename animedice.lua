@@ -4,6 +4,7 @@ local LocalPlayer = Players.LocalPlayer
 
 -- Add your hosted Kazu Hub loadstring here before enabling Auto Execute On Teleport.
 local AUTOEXEC_CODE = 
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kazupaldo/LuaQwerty/refs/heads/main/animedice.lua"))()
 
 if game.PlaceId ~= 113290951185459 then
     error("[Kazu Hub] This script only works in Anime Dice.", 0)
