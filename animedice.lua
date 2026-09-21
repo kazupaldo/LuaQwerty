@@ -3,7 +3,7 @@ local RS = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
 -- Add your hosted Kazu Hub loadstring here before enabling Auto Execute On Teleport.
-local AUTOEXEC_CODE = [[PASTE_YOUR_KAZU_HUB_LOADSTRING_HERE]]
+local AUTOEXEC_CODE = 
 
 if game.PlaceId ~= 113290951185459 then
     error("[Kazu Hub] This script only works in Anime Dice.", 0)
